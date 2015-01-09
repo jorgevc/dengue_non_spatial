@@ -1,0 +1,40 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8x]{inputenc}
+
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{amssymb}
+\usepackage{amsbsy}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.8}
+
+\addtolength{\textheight}{20ex}
+\addtolength{\voffset}{-7ex}
+
+
+%\usepgfplotslibrary{external} 
+%\tikzexternalize[prefix=PGFplots/, mode=only graphics]
+%\tikzexternalize[prefix=PGplots/]
+%\tikzset{external/force remake=true}
+
+%\usepackage[graphics,tightpage,active]{preview}
+\begin{document}
+%\begin{preview}
+%\tikzsetnextfilename{Fig1p}
+\begin{tikzpicture}
+  \begin{axis}[
+  title = Evolution of the populations,
+  xlabel={$time$},
+  ylabel={$Population/Capacity$},
+  legend entries={pupae,female,male,total},
+  ]
+  \addplot table[x=t,y=pupae(1)]{../TEST/density_evolution};
+  \addplot table[x=t,y=female(2)]{../TEST/density_evolution};
+  \addplot table[x=t,y=male(3)]{../TEST/density_evolution};
+  \addplot table[x=t,y=total]{../TEST/density_evolution};
+  \end{axis}
+\end{tikzpicture}
+%\end{preview}
+\end{document}
