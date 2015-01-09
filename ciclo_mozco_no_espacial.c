@@ -6,18 +6,15 @@ Copyright 2012 Jorge Velazquez
 #include <stdlib.h>
 #include <omp.h>
 #include <math.h>
-
-//#include <my_global.h>
-//#include <mysql.h>
+#include <time.h>
 
 #include "libPP_5.0.h"
 #include "EntSalArb_MP.h"
 #include "GNA.h"
 #include "MC_sweep_mozquito.h"
+#include "conn_mysql.h"
 
 main(){	
-	
-	//printf("MySQL client version: %s\n", mysql_get_client_info());
 	
 ///////////////////////////Inicializa parametros de la simulacion
 int NDX=300;
@@ -38,23 +35,13 @@ global_parameters.MaleDeadRate=0.0;
 global_parameters.FemaleOffspringRate=0.0;
 global_parameters.Metabolic_Time = obtain_metabolic_time(&global_parameters);
 
+
 omp_set_num_threads(4);
 ////////////////////////////Termina Inicializa de paremtros de la simulacion
 /////////////////////////////////////Prepara CONTENEDOR para escribir DATOS:
 
 Float2D_MP MP_RhoVsT_1;		
-InicializaFloat2D_MP(&MP_RhoVsT_1, T_max, 3, 0);
-
-		
-char contenedor[300];
-	
-FILE *pD;
-char NombrePD[200];
-char contenedorCompleto[320];
-/////////////////////////////////////Termina Prepara CONTENEDOR para escribir DATOS
-	
-	sprintf(contenedor,"TEST");
-	CreaContenedor(contenedor);		
+InicializaFloat2D_MP(&MP_RhoVsT_1, T_max, 3, 0);		
 			
 			///////////////////////////////////// INICIA PARALLEL
 
@@ -150,8 +137,48 @@ char contenedorCompleto[320];
 
 			}	////////////////////////////////////////////////////////////////////TERMINA PARALLEL
 
-			store_density_evolution(contenedor,&MP_RhoVsT_1, 0);	
-			LiberaMemoriaFloat2D_MP(&MP_RhoVsT_1);
+	
+	//// Guarda parametros en MySql	y crea CONTENEDOR
+	char contenedor[300];
+	sprintf(contenedor,"TEST");
+	CreaContenedor(contenedor);	
+	
+	time_t raw_now = time(NULL);
+	struct tm * now;
+	now = localtime ( &raw_now );
+	char sim_time[50];
+	sprintf(sim_time,"'%d-%d-%d %d:%d:%d'",now->tm_year + 1900, now->tm_mon + 1, now->tm_mday,now->tm_hour,now->tm_min,now->tm_sec);
+		
+	char values[300];
+	sprintf(values,"NULL,%s,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%d,%d,%d,%d,'%s',0",sim_time,
+	global_parameters.PupaDeadRate,			
+	global_parameters.PupaOffspringRate,
+	global_parameters.FemaleOffspringFraction,
+	global_parameters.FemaleDeadRate,
+	global_parameters.MaleDeadRate,
+	global_parameters.FemaleOffspringRate,
+	global_parameters.Metabolic_Time,
+	INI_FEMALE,
+	INI_MALE,
+	INI_DENSITY_PUPAE,
+	NDX,
+	NDY,
+	T_max,
+	NoEnsambles,
+	contenedor
+	);
+	
+	printf("MySQL client version: %s\n", mysql_get_client_info());
+	MYSQL *con = connect_db("localhost","dengue_fcfm", "EPAFJV", "dengue_fcfm");
+	int inserted_id = insert_into_db(con, "sim_non_spatial",values);
+	mysql_close(con);
+	char contenedorCompleto[200];
+	sprintf(contenedorCompleto,"%s/%d",contenedor,inserted_id);
+	CreaContenedor(contenedorCompleto);
+	store_density_evolution(contenedorCompleto,&MP_RhoVsT_1, 0);	
+	//////
+	
+	LiberaMemoriaFloat2D_MP(&MP_RhoVsT_1);
 
 						
 return;
