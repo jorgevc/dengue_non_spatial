@@ -1,0 +1,37 @@
+--El codigo de las simulaciones se puede ver y bajar de:
+
+https://github.com/jorgevc/dengue_non_spatial.git
+
+--Las simulaciones hechas están listadas en una base de datos MySql que se puede acceder (copia) desde:
+
+http://simulaciones.cybernia.com.mx
+
+usuario: cybernia_dengue
+Password: EPAFJV
+
+Una vez ingreando seguir los siguientes pasos:
+1) Hacer click en 'cybernia_dengue' que se encuentra en el panel izquierdo. (esta es la base de datos)
+
+2) Hacer click en 'sim_non_spatial'. (este es el nombre de la tabla)
+
+Cada renglon que aparece en la ventana principal representa una simulacion que se ha hecho. El significado de las columnas es el siguiente:
+
+id -> id de la simulacion
+Date -> fecha y hora de inicio de la simulacion
+PupaDeadRate -> taza de mortandad per capita de crisalida
+PupaOffspringRate -> taza de transformacion de crisalida a mozquito
+FemaleOffspringFraction -> Fraccion de mozquitos hembra que surgen de las crisalidas
+FemaleDeadRate -> taza de mortandad per capita de mozquito hembra
+MaleDeadRate -> taza de mortandad per capita de mozquito macho
+FemaleOffspringRate -> taza de produccion de crizalidas per capita de mozquitos hembra
+Metabolic_Time -> factor de conversion entre pasos de computo(Barridos montecarlo) y tiempo fisico
+INI_FEMALE -> Numero inicial de hembras
+INI_MALE -> Numero inicial de machos
+INI_DENSITY_PUPAE -> Fraccion de criadero ocupado por crisalidas. Esto se mide con respecto a la capacidad del criadero.
+NDX -> longuitud horizontal del criadero medido en celdas de simulacion (NDX*NDY da la capacidad 'C' del criadero)
+NDY -> longuitud horizontal del criadero medido en celdas de simulacion
+T_max -> Pasos de computo de la simulacion
+NoEnsambles -> Numero de veces que se corrio la simulacion. Los resultados de las simulaciones son el promedios del ensamble de simulaciones.
+location -> directorio (en mi compu) donde se encuentras los datos generados de la simulacion
+type -> bandera para marcar la importancia de la simulacion. Por ejemplo: 1 se usa en reporte, 2 se usa en draft de articulo , 3 se usa en articulo.
+

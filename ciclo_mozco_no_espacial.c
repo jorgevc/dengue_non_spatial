@@ -45,16 +45,24 @@ int INI_MALE=0;
 float INI_DENSITY_PUPAE=0.3;
 
 mozquito_parameters global_parameters;
-global_parameters.PupaDeadRate=0.0;			
+global_parameters.PupaDeadRate=0.2;			
 global_parameters.PupaOffspringRate=1.0;
-global_parameters.FemaleOffspringFraction=0.5;
-global_parameters.FemaleDeadRate=0.0;
+global_parameters.FemaleOffspringFraction=0.7;
+global_parameters.FemaleDeadRate=0.2;
 global_parameters.MaleDeadRate=0.0;
-global_parameters.FemaleOffspringRate=0.0;
+global_parameters.FemaleOffspringRate=0.1;
 global_parameters.Metabolic_Time = obtain_metabolic_time(&global_parameters);
 
 
 omp_set_num_threads(4);
+
+//date time of simulation
+time_t raw_now = time(NULL);
+struct tm * now;
+now = localtime ( &raw_now );
+char sim_time[50];
+sprintf(sim_time,"'%d-%d-%d %d:%d:%d'",now->tm_year + 1900, now->tm_mon + 1, now->tm_mday,now->tm_hour,now->tm_min,now->tm_sec);
+	
 ////////////////////////////Termina Inicializa de paremtros de la simulacion
 /////////////////////////////////////Prepara CONTENEDOR para escribir DATOS:
 
@@ -160,12 +168,6 @@ InicializaFloat2D_MP(&MP_RhoVsT_1, T_max, 3, 0);
 	char contenedor[300];
 	sprintf(contenedor,"TEST");
 	CreaContenedor(contenedor);	
-	
-	time_t raw_now = time(NULL);
-	struct tm * now;
-	now = localtime ( &raw_now );
-	char sim_time[50];
-	sprintf(sim_time,"'%d-%d-%d %d:%d:%d'",now->tm_year + 1900, now->tm_mon + 1, now->tm_mday,now->tm_hour,now->tm_min,now->tm_sec);
 		
 	char values[300];
 	sprintf(values,"NULL,%s,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%d,%d,%d,%d,'%s',0",sim_time,
@@ -193,7 +195,18 @@ InicializaFloat2D_MP(&MP_RhoVsT_1, T_max, 3, 0);
 	char contenedorCompleto[200];
 	sprintf(contenedorCompleto,"%s/%d",contenedor,inserted_id);
 	CreaContenedor(contenedorCompleto);
-	store_density_evolution(contenedorCompleto,&MP_RhoVsT_1, 0);	
+	store_density_evolution(contenedorCompleto,&MP_RhoVsT_1, 0);
+	FILE *aA;
+	char archivo[200];
+	sprintf(archivo,"Graficas/simulation.tex");	
+	aA=fopen(archivo, "w");
+	fprintf(aA,"\\newcommand{\\data}{../%s/density_evolution}\n\\newcommand{\\plotTitle}{id=%d Evolution of the populations}",contenedorCompleto,inserted_id);
+	fclose(aA);
+	sprintf(archivo,"Graficas/include_make");
+	aA=fopen(archivo, "w");
+	fprintf(aA,"id = %d\n",inserted_id);
+	fclose(aA);
+	system("cd Graficas; make figure");
 	//////
 	
 	LiberaMemoriaFloat2D_MP(&MP_RhoVsT_1);

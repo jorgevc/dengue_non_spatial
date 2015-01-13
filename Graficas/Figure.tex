@@ -13,28 +13,30 @@
 \addtolength{\textheight}{20ex}
 \addtolength{\voffset}{-7ex}
 
-
+%\newcommand{\data}{../TEST/3/density_evolution}
+%\newcommand{\plotTitle}{id=3 Evolution of the populations}
+\input{simulation.tex}
 %\usepgfplotslibrary{external} 
 %\tikzexternalize[prefix=PGFplots/, mode=only graphics]
 %\tikzexternalize[prefix=PGplots/]
 %\tikzset{external/force remake=true}
 
-%\usepackage[graphics,tightpage,active]{preview}
+\usepackage[graphics,tightpage,active]{preview}
 \begin{document}
-%\begin{preview}
+\begin{preview}
 %\tikzsetnextfilename{Fig1p}
 \begin{tikzpicture}
   \begin{axis}[
-  title = Evolution of the populations,
+  title = \plotTitle,
   xlabel={$time$},
   ylabel={$Population/Capacity$},
   legend entries={pupae,female,male,total},
   ]
-  \addplot table[x=t,y=pupae(1)]{../TEST/density_evolution};
-  \addplot table[x=t,y=female(2)]{../TEST/density_evolution};
-  \addplot table[x=t,y=male(3)]{../TEST/density_evolution};
-  \addplot table[x=t,y=total]{../TEST/density_evolution};
+  \addplot table[x=t,y=pupae(1)]{\data};
+  \addplot table[x=t,y=female(2)]{\data};
+  \addplot table[x=t,y=male(3)]{\data};
+  \addplot table[x=t,y=total]{\data};
   \end{axis}
 \end{tikzpicture}
-%\end{preview}
+\end{preview}
 \end{document}
