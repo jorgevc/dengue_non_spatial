@@ -24,4 +24,16 @@ void Update_mozquito(estado *es,mozquitos_state *mozquitos, mozquito_parameters 
 
 float obtain_metabolic_time(mozquito_parameters *param);
 
-void store_density_evolution(char *contenedor, Float2D_MP *RhoVsT, short int Fecha);
+void store_density_evolution(char *contenedor, Float2D_MP *RhoVsT, short int Fecha, float *time_map);
+
+float calendar_temperature(float FisicalTime);
+
+void set_param_temperature_dependent(mozquito_parameters *param,float temperature);
+
+float feamale_mortality_rate(float T);
+
+float feamale_oviposition_rate(float Temp);
+
+float aquatic_mortality_rate(float Temp);
+
+float aquatic_transition_rate(float Temp);

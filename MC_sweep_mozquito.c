@@ -143,7 +143,7 @@ float obtain_metabolic_time(mozquito_parameters *param)
 return metaTime;
 }
 
-void store_density_evolution(char *contenedor, Float2D_MP *RhoVsT, short int Fecha)
+void store_density_evolution(char *contenedor, Float2D_MP *RhoVsT, short int Fecha, float *time_map)
 {
 FILE *datos;
 char archivo[200];
@@ -172,7 +172,7 @@ if(RhoVsT!=NULL)
 	}
 	
 	datos=fopen(archivo, "w");
-	fprintf(datos,"t pupae(1) female(2) male(3) total \n");
+	fprintf(datos,"t pupae(1) female(2) male(3) total fisical_time \n");
 	
 	
 	int T,e;
@@ -186,10 +186,101 @@ if(RhoVsT!=NULL)
 			fprintf(datos," %f",RhoVsT->array[T][e]/NoEnsambles);
 			Total+=RhoVsT->array[T][e]/NoEnsambles;
 		}
-		fprintf(datos, " %f\n",Total);		
+		fprintf(datos, " %f",Total);
+		if(time_map != NULL)
+		{
+			fprintf(datos, " %f",time_map[T]);
+		}
+		fprintf(datos, "\n");
 		//printf("guadando:%d %f %d NoEnsambles=%d \n",T,RhoVsT->array[T][e]/NoEnsambles,e, RhoVsT->NoEnsambles);	
 	}
 	fclose(datos);
 }
 return;
+}
+
+
+float calendar_temperature(float FisicalTime)
+{
+float MonthlyTemp[12];
+float UnitsPerMonth = 30.0;
+int month = (int)(FisicalTime/UnitsPerMonth);
+
+month=(month-(month/12)*12);
+
+MonthlyTemp[0]=13.9;
+MonthlyTemp[1]=15.1;
+MonthlyTemp[2]=17.1;
+MonthlyTemp[3]=19.0;
+MonthlyTemp[4]=19.8;
+MonthlyTemp[5]=19.4;
+MonthlyTemp[6]=18.4;
+MonthlyTemp[7]=18.4;
+MonthlyTemp[8]=18.2;
+MonthlyTemp[9]=17.3;
+MonthlyTemp[10]=15.8;
+MonthlyTemp[11]=14.5;
+
+return MonthlyTemp[month];
+}
+
+void set_param_temperature_dependent(mozquito_parameters *param,float temperature)
+{
+	param->FemaleDeadRate = feamale_mortality_rate(temperature);
+	param->FemaleOffspringRate = feamale_oviposition_rate(temperature);
+	param->PupaDeadRate = aquatic_mortality_rate(temperature);
+	param->PupaOffspringRate = aquatic_transition_rate(temperature);
+	param->Metabolic_Time = obtain_metabolic_time(param);
+	return;
+}
+
+float feamale_mortality_rate(float T)
+{
+	float a,a1,a2,a3,a4,R;
+	a=0.8692;
+	a1=-0.159;
+	a2=0.01116;
+	a3=-0.0003408;
+	a4=0.000003809;
+	R=a + a1 * T + a2 * T*T + a3*T*T*T + a4*T*T*T*T;
+	return R;
+}
+
+float feamale_oviposition_rate(float Temp)
+{
+	float a,a1,a2,a3,a4,R;
+	a=-5.4;
+	a1=1.8;
+	a2=-0.2124;
+	a3=0.01015;
+	a4=-0.0001515;
+	R=a + a1 * Temp + a2 * Temp*Temp + a3*Temp*Temp*Temp + a4*Temp*Temp*Temp*Temp;
+	return R;
+}
+
+float aquatic_mortality_rate(float Temp)
+{
+	float a,a1,a2,a3,a4,R;
+	a=2.130;
+	a1=-0.3797;
+	a2=0.02457;
+	a3=-0.0006778;
+	a4=0.000006794;
+	R=a + a1 * Temp + a2 * Temp*Temp + a3*Temp*Temp*Temp + a4*Temp*Temp*Temp*Temp;
+	return R;
+}
+
+float aquatic_transition_rate(float Temp)
+{
+	float a,a1,a2,a3,a4,a5,a6,a7,R;
+	a=0.131;
+	a1=-0.05723;
+	a2=0.01164;
+	a3=-0.001341;
+	a4=0.00008723;
+	a5=-0.000003017;
+	a6=0.00000005153;
+	a7=-0.000000000342;
+	R=a + a1 * Temp + a2 * Temp*Temp + a3*Temp*Temp*Temp + a4*Temp*Temp*Temp*Temp;
+	return R;
 }

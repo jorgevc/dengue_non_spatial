@@ -28,14 +28,14 @@
 \begin{tikzpicture}
   \begin{axis}[
   title = \plotTitle,
-  xlabel={$time$},
+  xlabel={fisical time (days)},
   ylabel={$Population/Capacity$},
   legend entries={pupae,female,male,total},
   ]
-  \addplot table[x=t,y=pupae(1)]{\data};
-  \addplot table[x=t,y=female(2)]{\data};
-  \addplot table[x=t,y=male(3)]{\data};
-  \addplot table[x=t,y=total]{\data};
+  \addplot table[x=fisical_time,y=pupae(1)]{\data};
+  \addplot table[x=fisical_time,y=female(2)]{\data};
+  \addplot table[x=fisical_time,y=male(3)]{\data};
+  \addplot table[x=fisical_time,y=total]{\data};
   \end{axis}
 \end{tikzpicture}
 \end{preview}

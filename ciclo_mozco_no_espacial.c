@@ -35,22 +35,22 @@ Copyright 2015 Jorge Velazquez
 main(){	
 	
 ///////////////////////////Inicializa parametros de la simulacion
-int NDX=300;
+int NDX=50;
 int NDY=NDX;
-int T_max = 30;
-int NoEnsambles=4;
+int T_max = 4500;
+int NoEnsambles=8;
 
 int INI_FEMALE=0;
 int INI_MALE=0;
 float INI_DENSITY_PUPAE=0.3;
 
 mozquito_parameters global_parameters;
-global_parameters.PupaDeadRate=0.2;			
-global_parameters.PupaOffspringRate=1.0;
-global_parameters.FemaleOffspringFraction=0.7;
-global_parameters.FemaleDeadRate=0.2;
-global_parameters.MaleDeadRate=0.0;
-global_parameters.FemaleOffspringRate=0.1;
+global_parameters.PupaDeadRate=0.12;			
+global_parameters.PupaOffspringRate=0.05;
+global_parameters.FemaleOffspringFraction=0.5;
+global_parameters.FemaleDeadRate=0.14*1.05042;
+global_parameters.MaleDeadRate=0.14*1.05042;
+global_parameters.FemaleOffspringRate=1.0;
 global_parameters.Metabolic_Time = obtain_metabolic_time(&global_parameters);
 
 
@@ -67,7 +67,9 @@ sprintf(sim_time,"'%d-%d-%d %d:%d:%d'",now->tm_year + 1900, now->tm_mon + 1, now
 /////////////////////////////////////Prepara CONTENEDOR para escribir DATOS:
 
 Float2D_MP MP_RhoVsT_1;		
-InicializaFloat2D_MP(&MP_RhoVsT_1, T_max, 3, 0);		
+InicializaFloat2D_MP(&MP_RhoVsT_1, T_max, 3, 0);
+float FisicalTime[T_max+1];
+FisicalTime[0]=0.0;		
 			
 			///////////////////////////////////// INICIA PARALLEL
 
@@ -111,20 +113,27 @@ InicializaFloat2D_MP(&MP_RhoVsT_1, T_max, 3, 0);
 		ResetFloat2D_MP(&MP_RhoVsT);
 		MP_RhoVsT.NoEnsambles=MaxPar;
 		float Area;
+		float temperature;
 		
+			
 			////////////////////////////////Barrido Monte CARLO:
 				int i;
 				for(i=0;i<T_max;i++)
 				{
+					temperature = calendar_temperature(FisicalTime[e[0].T]);
+					set_param_temperature_dependent(&param,temperature);
 					for(Par=0;Par<MaxPar;Par++)
 					{
 						Area=(float)(e[Par].NDX*e[Par].NDY);
 						MP_RhoVsT.array[e[Par].T][1]+=((float)e[Par].ON/Area);
 						MP_RhoVsT.array[e[Par].T][2]+=((float)mozquitos[Par].female/Area);
-						MP_RhoVsT.array[e[Par].T][3]+=((float)mozquitos[Par].male/Area);
+						MP_RhoVsT.array[e[Par].T][3]+=((float)mozquitos[Par].male/Area);	
 						MC_sweep_mozquito(&e[Par], &mozquitos[Par], &param);
-					}				
-					
+					}
+					#pragma omp single
+					{
+						FisicalTime[e[0].T]=FisicalTime[e[0].T-1] + 1.0/param.Metabolic_Time;			
+					}
 						if((i-(i/500)*500)==499)    //Inicializa cada 500 pasos
 						{
 							init_JKISS();
@@ -163,10 +172,9 @@ InicializaFloat2D_MP(&MP_RhoVsT_1, T_max, 3, 0);
 
 			}	////////////////////////////////////////////////////////////////////TERMINA PARALLEL
 
-	
 	//// Guarda parametros en MySql	y crea CONTENEDOR
 	char contenedor[300];
-	sprintf(contenedor,"TEST");
+	sprintf(contenedor,"DependenciaEnTemperatura");
 	CreaContenedor(contenedor);	
 		
 	char values[300];
@@ -195,12 +203,15 @@ InicializaFloat2D_MP(&MP_RhoVsT_1, T_max, 3, 0);
 	char contenedorCompleto[200];
 	sprintf(contenedorCompleto,"%s/%d",contenedor,inserted_id);
 	CreaContenedor(contenedorCompleto);
-	store_density_evolution(contenedorCompleto,&MP_RhoVsT_1, 0);
+	store_density_evolution(contenedorCompleto,&MP_RhoVsT_1, 0, FisicalTime);
 	FILE *aA;
 	char archivo[200];
 	sprintf(archivo,"Graficas/simulation.tex");	
 	aA=fopen(archivo, "w");
-	fprintf(aA,"\\newcommand{\\data}{../%s/density_evolution}\n\\newcommand{\\plotTitle}{id=%d Evolution of the populations}",contenedorCompleto,inserted_id);
+	float R;
+	R=global_parameters.FemaleOffspringFraction*global_parameters.PupaOffspringRate*global_parameters.FemaleOffspringRate;
+	R=R/(global_parameters.FemaleDeadRate*(global_parameters.PupaDeadRate + global_parameters.PupaOffspringRate));
+	fprintf(aA,"\\newcommand{\\data}{../%s/density_evolution}\n\\newcommand{\\plotTitle}{id=%d Evolution of the populations R=Temperature Dependent}",contenedorCompleto,inserted_id,R);
 	fclose(aA);
 	sprintf(archivo,"Graficas/include_make");
 	aA=fopen(archivo, "w");
