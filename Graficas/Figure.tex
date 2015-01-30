@@ -30,13 +30,24 @@
   title = \plotTitle,
   xlabel={fisical time (days)},
   ylabel={$Population/Capacity$},
-  legend entries={pupae,female,male,total},
+  legend entries={pupae,female,R,Temp},
   ]
   \addplot table[x=fisical_time,y=pupae(1)]{\data};
   \addplot table[x=fisical_time,y=female(2)]{\data};
-  \addplot table[x=fisical_time,y=male(3)]{\data};
-  \addplot table[x=fisical_time,y=total]{\data};
+%  \addplot table[x=fisical_time,y=male(3)]{\data};
+%  \addplot table[x=fisical_time,y=total]{\data};
+  \addplot table[x=fisical_time,y=R]{\data};
+  \addplot table[x=fisical_time,y=Temp]{\data};
   \end{axis}
 \end{tikzpicture}
+%\begin{tikzpicture}
+% \begin{axis}[
+% title = {R},
+% xlabel={fisical time (days)},
+% ylabel={R},
+% ]
+% \addplot table[x=fisical_time,y=R]{\data};
+% \end{axis}
+%\end{tikzpicture}
 \end{preview}
 \end{document}

@@ -37,7 +37,7 @@ main(){
 ///////////////////////////Inicializa parametros de la simulacion
 int NDX=50;
 int NDY=NDX;
-int T_max = 4500;
+int T_max = 2250;
 int NoEnsambles=8;
 
 int INI_FEMALE=0;
@@ -69,7 +69,9 @@ sprintf(sim_time,"'%d-%d-%d %d:%d:%d'",now->tm_year + 1900, now->tm_mon + 1, now
 Float2D_MP MP_RhoVsT_1;		
 InicializaFloat2D_MP(&MP_RhoVsT_1, T_max, 3, 0);
 float FisicalTime[T_max+1];
-FisicalTime[0]=0.0;		
+FisicalTime[0]=0.0;
+float R_dyn[T_max+1];
+float Temp_dyn[T_max+1];
 			
 			///////////////////////////////////// INICIA PARALLEL
 
@@ -114,7 +116,7 @@ FisicalTime[0]=0.0;
 		MP_RhoVsT.NoEnsambles=MaxPar;
 		float Area;
 		float temperature;
-		
+		float R;
 			
 			////////////////////////////////Barrido Monte CARLO:
 				int i;
@@ -132,7 +134,11 @@ FisicalTime[0]=0.0;
 					}
 					#pragma omp single
 					{
-						FisicalTime[e[0].T]=FisicalTime[e[0].T-1] + 1.0/param.Metabolic_Time;			
+						FisicalTime[e[0].T]=FisicalTime[e[0].T-1] + 1.0/param.Metabolic_Time;
+						R=param.FemaleOffspringFraction*param.PupaOffspringRate*param.FemaleOffspringRate;
+						R=R/(param.FemaleDeadRate*(param.PupaDeadRate + param.PupaOffspringRate));			
+						R_dyn[i]=R;
+						Temp_dyn[i]=temperature;
 					}
 						if((i-(i/500)*500)==499)    //Inicializa cada 500 pasos
 						{
@@ -203,15 +209,12 @@ FisicalTime[0]=0.0;
 	char contenedorCompleto[200];
 	sprintf(contenedorCompleto,"%s/%d",contenedor,inserted_id);
 	CreaContenedor(contenedorCompleto);
-	store_density_evolution(contenedorCompleto,&MP_RhoVsT_1, 0, FisicalTime);
+	store_density_evolution(contenedorCompleto,&MP_RhoVsT_1, 0, FisicalTime,R_dyn,Temp_dyn);
 	FILE *aA;
 	char archivo[200];
 	sprintf(archivo,"Graficas/simulation.tex");	
 	aA=fopen(archivo, "w");
-	float R;
-	R=global_parameters.FemaleOffspringFraction*global_parameters.PupaOffspringRate*global_parameters.FemaleOffspringRate;
-	R=R/(global_parameters.FemaleDeadRate*(global_parameters.PupaDeadRate + global_parameters.PupaOffspringRate));
-	fprintf(aA,"\\newcommand{\\data}{../%s/density_evolution}\n\\newcommand{\\plotTitle}{id=%d Evolution of the populations R=Temperature Dependent}",contenedorCompleto,inserted_id,R);
+	fprintf(aA,"\\newcommand{\\data}{../%s/density_evolution}\n\\newcommand{\\plotTitle}{id=%d Evolution of the populations R=Temperature Dependent}",contenedorCompleto,inserted_id);
 	fclose(aA);
 	sprintf(archivo,"Graficas/include_make");
 	aA=fopen(archivo, "w");

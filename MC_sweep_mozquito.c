@@ -143,7 +143,7 @@ float obtain_metabolic_time(mozquito_parameters *param)
 return metaTime;
 }
 
-void store_density_evolution(char *contenedor, Float2D_MP *RhoVsT, short int Fecha, float *time_map)
+void store_density_evolution(char *contenedor, Float2D_MP *RhoVsT, short int Fecha, float *time_map,float *R,float *Temp)
 {
 FILE *datos;
 char archivo[200];
@@ -172,7 +172,7 @@ if(RhoVsT!=NULL)
 	}
 	
 	datos=fopen(archivo, "w");
-	fprintf(datos,"t pupae(1) female(2) male(3) total fisical_time \n");
+	fprintf(datos,"t pupae(1) female(2) male(3) total fisical_time R Temp\n");
 	
 	
 	int T,e;
@@ -190,6 +190,14 @@ if(RhoVsT!=NULL)
 		if(time_map != NULL)
 		{
 			fprintf(datos, " %f",time_map[T]);
+		}
+		if(R != NULL)
+		{
+			fprintf(datos, " %f",R[T]);
+		}
+		if(Temp != NULL)
+		{
+			fprintf(datos, " %f",Temp[T]);
 		}
 		fprintf(datos, "\n");
 		//printf("guadando:%d %f %d NoEnsambles=%d \n",T,RhoVsT->array[T][e]/NoEnsambles,e, RhoVsT->NoEnsambles);	
