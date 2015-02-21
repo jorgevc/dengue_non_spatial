@@ -37,7 +37,7 @@ main(){
 ///////////////////////////Inicializa parametros de la simulacion
 int NDX=50;
 int NDY=NDX;
-int T_max = 2250;
+int T_max = 1400; //2250;
 int NoEnsambles=8;
 
 int INI_FEMALE=0;
@@ -115,15 +115,18 @@ float Temp_dyn[T_max+1];
 		ResetFloat2D_MP(&MP_RhoVsT);
 		MP_RhoVsT.NoEnsambles=MaxPar;
 		float Area;
-		float temperature;
+		float temperature, humidity;
 		float R;
+		temperature = calendar_temperature(50.0);
 			
 			////////////////////////////////Barrido Monte CARLO:
 				int i;
 				for(i=0;i<T_max;i++)
 				{
-					temperature = calendar_temperature(FisicalTime[e[0].T]);
+					//temperature = calendar_temperature(FisicalTime[e[0].T]);
+					humidity = calendar_humidity(FisicalTime[e[0].T]);
 					set_param_temperature_dependent(&param,temperature);
+					set_diapause_humidity_dependent(&param,humidity);
 					for(Par=0;Par<MaxPar;Par++)
 					{
 						Area=(float)(e[Par].NDX*e[Par].NDY);
@@ -214,7 +217,7 @@ float Temp_dyn[T_max+1];
 	char archivo[200];
 	sprintf(archivo,"Graficas/simulation.tex");	
 	aA=fopen(archivo, "w");
-	fprintf(aA,"\\newcommand{\\data}{../%s/density_evolution}\n\\newcommand{\\plotTitle}{id=%d Evolution of the populations R=Temperature Dependent}",contenedorCompleto,inserted_id);
+	fprintf(aA,"\\newcommand{\\data}{../%s/density_evolution}\n\\newcommand{\\plotTitle}{id=%d diapause=100\\\% R=%f}",contenedorCompleto,inserted_id,R_dyn[0]);
 	fclose(aA);
 	sprintf(archivo,"Graficas/include_make");
 	aA=fopen(archivo, "w");

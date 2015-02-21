@@ -10,7 +10,9 @@ float FemaleOffspringFraction;
 float FemaleDeadRate;
 float MaleDeadRate;
 float FemaleOffspringRate;
-float Metabolic_Time;			
+float Metabolic_Time;
+float DiapauseRate;
+float AntiDiapauseRate;		
 };
 
 struct MOZQUITOS_STATE_STUCT {
@@ -28,7 +30,11 @@ void store_density_evolution(char *contenedor, Float2D_MP *RhoVsT, short int Fec
 
 float calendar_temperature(float FisicalTime);
 
+float calendar_humidity(float FisicalTime);
+
 void set_param_temperature_dependent(mozquito_parameters *param,float temperature);
+
+void set_diapause_humidity_dependent(mozquito_parameters *param,float humidity);
 
 float feamale_mortality_rate(float T);
 

@@ -24,6 +24,9 @@ Copyright 2015 Jorge Velazquez
 #include <stdio.h>
 #include <time.h>
 
+#define DIAPAUSIC 2
+#define NODIAPAUSIC 1
+
 void MC_sweep_mozquito(estado *es, mozquitos_state *mozquitos, mozquito_parameters *param)
 {
 //	start2 = clock();  //clock comentar!!
@@ -55,7 +58,7 @@ return;
 void Update_mozquito(estado *es,mozquitos_state *mozquitos, mozquito_parameters *parameters, int N)
 {
 double Rand; 
-float pPupaDead, pPupaOffspring, pMaleDead, pFemaleDead, pMozquitoOffspring;
+float pPupaDead, pPupaOffspring, pMaleDead, pFemaleDead, pMozquitoOffspring, pPupaAntiDiapasue,pPupaDiapause;
 sitio vecino;
 int NDX = es->NDX;
 int NDY = es->NDY;
@@ -69,23 +72,38 @@ int i,j;
 		j=es->SO[N].j;
 		pPupaDead=parameters->PupaDeadRate/parameters->Metabolic_Time; //Asignar Max_Metabolic, si no hay division entre cero.
 		pPupaOffspring=parameters->PupaOffspringRate/parameters->Metabolic_Time;
-
-		if(Rand<=(pPupaOffspring + pPupaDead )) //dead or offspring or nothing
-		{	
-			es->s[i][j]=0;
-			es->SO[N]=es->SO[(es->ON)];
-			es->INDICE[es->SO[es->ON].i][es->SO[es->ON].j]=N;
-			(es->ON)--;	
-			
-			if(Rand <= pPupaOffspring )
+		pPupaDiapause=parameters->DiapauseRate/parameters->Metabolic_Time;
+		
+		if(es->TIPO[i][j] == DIAPAUSIC)
+		{
+			pPupaAntiDiapasue=parameters->AntiDiapauseRate/parameters->Metabolic_Time;
+			if(Rand <= pPupaAntiDiapasue )
 			{
-				if(Rand <= (pPupaOffspring*(parameters->FemaleOffspringFraction)))
+				es->TIPO[i][j] = NODIAPAUSIC ;
+			}
+		}else{
+			if(Rand<=(pPupaOffspring + pPupaDead )) //dead or offspring
+			{	
+				es->s[i][j]=0;
+				es->SO[N]=es->SO[(es->ON)];
+				es->INDICE[es->SO[es->ON].i][es->SO[es->ON].j]=N;
+				(es->ON)--;	
+				
+				if(Rand <= pPupaOffspring )
 				{
-					(mozquitos->female)++;
-				}else{
-					(mozquitos->male)++;
+					if(Rand <= (pPupaOffspring*(parameters->FemaleOffspringFraction)))
+					{
+						(mozquitos->female)++;
+					}else{
+						(mozquitos->male)++;
+					}
+				}	
+			}else{	//diapause or nothing
+				if(Rand <= pPupaDiapause)	//diapause
+				{
+						es->TIPO[i][j]= DIAPAUSIC ;
 				}
-			}	
+			}
 		}
 	}else{		//mozquitos
 		if(N <= es->ON + mozquitos->female) //female mozquitos
@@ -124,7 +142,7 @@ return;
 
 float obtain_metabolic_time(mozquito_parameters *param)
 {
-	float metaTime,pupaTime,femaleTime,maleTime;
+	float metaTime,pupaTime,femaleTime,maleTime,diapausicTime;
 	
 	pupaTime = param->PupaDeadRate + param->PupaOffspringRate;
 	femaleTime = param->FemaleDeadRate + param->FemaleOffspringRate;
@@ -140,6 +158,7 @@ float obtain_metabolic_time(mozquito_parameters *param)
 	{
 		metaTime=maleTime;
 	}
+	
 return metaTime;
 }
 
@@ -232,6 +251,30 @@ MonthlyTemp[11]=14.5;
 return MonthlyTemp[month];
 }
 
+float calendar_humidity(float FisicalTime)
+{
+float MonthlyHumidity[12];
+float UnitsPerMonth = 30.0;
+int month = (int)(FisicalTime/UnitsPerMonth);
+
+month=(month-(month/12)*12);
+
+MonthlyHumidity[0]=1.0;
+MonthlyHumidity[1]=1.0;
+MonthlyHumidity[2]=1.0;
+MonthlyHumidity[3]=1.0;
+MonthlyHumidity[4]=1.0;
+MonthlyHumidity[5]=1.0;
+MonthlyHumidity[6]=0.0;
+MonthlyHumidity[7]=0.0;
+MonthlyHumidity[8]=0.0;
+MonthlyHumidity[9]=0.0;
+MonthlyHumidity[10]=0.0;
+MonthlyHumidity[11]=0.0;
+
+return MonthlyHumidity[month];
+}
+
 void set_param_temperature_dependent(mozquito_parameters *param,float temperature)
 {
 	param->FemaleDeadRate = feamale_mortality_rate(temperature);
@@ -240,6 +283,32 @@ void set_param_temperature_dependent(mozquito_parameters *param,float temperatur
 	param->PupaOffspringRate = aquatic_transition_rate(temperature);
 	param->Metabolic_Time = obtain_metabolic_time(param);
 	return;
+}
+
+void set_diapause_humidity_dependent(mozquito_parameters *param,float humidity)
+{
+	float pupaPartialRate,PupaDeadRate,PupaOffspringRate, excess;
+	PupaDeadRate = param->PupaDeadRate;
+	PupaOffspringRate = param->PupaOffspringRate;
+	
+	if(humidity > 1.0)
+	{
+		humidity=1.0;
+	}
+	if(humidity < 0.0)
+	{
+		humidity=0.0;
+	}
+	param->AntiDiapauseRate = param->Metabolic_Time*humidity;
+	param->DiapauseRate  = param->Metabolic_Time*(1.0 - humidity);
+	pupaPartialRate = PupaDeadRate + PupaOffspringRate ;
+	excess = pupaPartialRate + param->DiapauseRate - param->Metabolic_Time ;	
+	if(excess > 0.0)
+	{
+		param->PupaDeadRate = PupaDeadRate - excess*(PupaDeadRate/pupaPartialRate);
+		param->PupaOffspringRate = PupaOffspringRate - excess*(PupaOffspringRate/pupaPartialRate);
+	}
+return;
 }
 
 float feamale_mortality_rate(float T)
