@@ -229,9 +229,12 @@ return;
 
 float calendar_temperature(float FisicalTime)
 {
+float Temperature;
+int nextMonth;
 float MonthlyTemp[12];
 float UnitsPerMonth = 30.0;
 int month = (int)(FisicalTime/UnitsPerMonth);
+float day = FisicalTime - month*30.0;
 
 month=(month-(month/12)*12);
 
@@ -248,7 +251,10 @@ MonthlyTemp[9]=17.3;
 MonthlyTemp[10]=15.8;
 MonthlyTemp[11]=14.5;
 
-return MonthlyTemp[month];
+nextMonth= (month + 1) - ((month + 1)/12)*12;
+Temperature = MonthlyTemp[month] + day*(MonthlyTemp[nextMonth] - MonthlyTemp[month])/30.0;
+
+return Temperature;
 }
 
 float calendar_humidity(float FisicalTime)

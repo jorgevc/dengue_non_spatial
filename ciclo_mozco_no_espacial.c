@@ -37,7 +37,7 @@ main(){
 ///////////////////////////Inicializa parametros de la simulacion
 int NDX=50;
 int NDY=NDX;
-int T_max = 1400; //2250;
+int T_max = 3250; //1400; 
 int NoEnsambles=8;
 
 int INI_FEMALE=0;
@@ -71,6 +71,7 @@ InicializaFloat2D_MP(&MP_RhoVsT_1, T_max, 3, 0);
 float FisicalTime[T_max+1];
 FisicalTime[0]=0.0;
 float R_dyn[T_max+1];
+float R_Delta[T_max+1];
 float Temp_dyn[T_max+1];
 			
 			///////////////////////////////////// INICIA PARALLEL
@@ -117,16 +118,16 @@ float Temp_dyn[T_max+1];
 		float Area;
 		float temperature, humidity;
 		float R;
-		temperature = calendar_temperature(50.0);
+		//temperature = calendar_temperature(50.0);
 			
 			////////////////////////////////Barrido Monte CARLO:
 				int i;
 				for(i=0;i<T_max;i++)
 				{
-					//temperature = calendar_temperature(FisicalTime[e[0].T]);
-					humidity = calendar_humidity(FisicalTime[e[0].T]);
+					temperature = calendar_temperature(FisicalTime[e[0].T]);
+					//humidity = calendar_humidity(FisicalTime[e[0].T]);
 					set_param_temperature_dependent(&param,temperature);
-					set_diapause_humidity_dependent(&param,humidity);
+					//set_diapause_humidity_dependent(&param,humidity);
 					for(Par=0;Par<MaxPar;Par++)
 					{
 						Area=(float)(e[Par].NDX*e[Par].NDY);
@@ -140,7 +141,18 @@ float Temp_dyn[T_max+1];
 						FisicalTime[e[0].T]=FisicalTime[e[0].T-1] + 1.0/param.Metabolic_Time;
 						R=param.FemaleOffspringFraction*param.PupaOffspringRate*param.FemaleOffspringRate;
 						R=R/(param.FemaleDeadRate*(param.PupaDeadRate + param.PupaOffspringRate));			
-						R_dyn[i]=R;
+						if(R>1.0)
+						{
+							R_dyn[i]=param.FemaleOffspringFraction*param.PupaOffspringRate*(R-1.0)/(R*param.FemaleDeadRate);
+						}else{
+							R_dyn[i]=0.0;
+						}
+						if(i>0)
+						{
+						#pragma omp flush
+						//printf("Ri=%f , Ri-1=%f, DR =%f , DT = %f , D=%f , 1/eps= %f \n",R_dyn[e[0].T],R_dyn[e[0].T - 1],(R_dyn[i]-R_dyn[i-1]),(FisicalTime[i]-FisicalTime[i-1]),(R_dyn[i]-R_dyn[i-1])/(FisicalTime[i]-FisicalTime[i-1]),(1.0/param.FemaleDeadRate));	
+						R_Delta[i]=((R_dyn[i]-R_dyn[i - 1])/(FisicalTime[i]-FisicalTime[i - 1]))*1.0/param.FemaleDeadRate;
+						}
 						Temp_dyn[i]=temperature;
 					}
 						if((i-(i/500)*500)==499)    //Inicializa cada 500 pasos
@@ -180,6 +192,11 @@ float Temp_dyn[T_max+1];
 						LiberaMemoriaFloat2D_MP(&MP_RhoVsT);	
 
 			}	////////////////////////////////////////////////////////////////////TERMINA PARALLEL
+int i;
+		for(i=1;i<T_max;i++)
+		{
+			R_dyn[i]=R_dyn[i]-R_Delta[i];
+		}
 
 	//// Guarda parametros en MySql	y crea CONTENEDOR
 	char contenedor[300];
@@ -217,7 +234,7 @@ float Temp_dyn[T_max+1];
 	char archivo[200];
 	sprintf(archivo,"Graficas/simulation.tex");	
 	aA=fopen(archivo, "w");
-	fprintf(aA,"\\newcommand{\\data}{../%s/density_evolution}\n\\newcommand{\\plotTitle}{id=%d diapause=100\\\% R=%f}",contenedorCompleto,inserted_id,R_dyn[0]);
+	fprintf(aA,"\\newcommand{\\data}{../%s/density_evolution}\n\\newcommand{\\plotTitle}{id=%d  }",contenedorCompleto,inserted_id);
 	fclose(aA);
 	sprintf(archivo,"Graficas/include_make");
 	aA=fopen(archivo, "w");
