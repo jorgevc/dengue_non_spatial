@@ -30,14 +30,14 @@
  % title = \plotTitle,
   xlabel={days},
   ylabel={Population/Capacity},
-  legend entries={exact, quasi-static},
+  %legend entries={exact, quasi-static},
   ]
  % \addplot table[x=fisical_time,y=pupae(1)]{\data};
   \addplot[] table[x=fisical_time,y=female(2)]{\data};
 %  \addplot table[x=fisical_time,y=male(3)]{\data};
 %  \addplot table[x=fisical_time,y=total]{\data};
   \addplot[dotted, smooth] table[x=fisical_time,y=R]{\data};
-  \addplot+[dotted, type=quadratic spline] table[x=fisical_time,y=R]{\data};
+%  \addplot+[dotted, type=quadratic spline] table[x=fisical_time,y=R]{\data};dotted, smooth
  % \addplot table[x=fisical_time,y=Temp]{\data};
   \end{axis}
 \end{tikzpicture}

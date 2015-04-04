@@ -35,7 +35,7 @@ Copyright 2015 Jorge Velazquez
 main(){	
 	
 ///////////////////////////Inicializa parametros de la simulacion
-int NDX=50;
+int NDX=100;
 int NDY=NDX;
 int T_max = 3250; //1400; 
 int NoEnsambles=8;
@@ -72,6 +72,7 @@ float FisicalTime[T_max+1];
 FisicalTime[0]=0.0;
 float R_dyn[T_max+1];
 float R_Delta[T_max+1];
+float R_Delta_2[T_max + 1];
 float Temp_dyn[T_max+1];
 			
 			///////////////////////////////////// INICIA PARALLEL
@@ -136,6 +137,8 @@ float Temp_dyn[T_max+1];
 						MP_RhoVsT.array[e[Par].T][3]+=((float)mozquitos[Par].male/Area);	
 						MC_sweep_mozquito(&e[Par], &mozquitos[Par], &param);
 					}
+					
+					
 					#pragma omp single
 					{
 						FisicalTime[e[0].T]=FisicalTime[e[0].T-1] + 1.0/param.Metabolic_Time;
@@ -147,13 +150,19 @@ float Temp_dyn[T_max+1];
 						}else{
 							R_dyn[i]=0.0;
 						}
-						if(i>0)
-						{
 						#pragma omp flush
-						//printf("Ri=%f , Ri-1=%f, DR =%f , DT = %f , D=%f , 1/eps= %f \n",R_dyn[e[0].T],R_dyn[e[0].T - 1],(R_dyn[i]-R_dyn[i-1]),(FisicalTime[i]-FisicalTime[i-1]),(R_dyn[i]-R_dyn[i-1])/(FisicalTime[i]-FisicalTime[i-1]),(1.0/param.FemaleDeadRate));	
-						R_Delta[i]=((R_dyn[i]-R_dyn[i - 1])/(FisicalTime[i]-FisicalTime[i - 1]))*1.0/param.FemaleDeadRate;
-						}
+						if(i>52)
+						{
+							//printf("Ri=%f , Ri-1=%f, DR =%f , DT = %f , D=%f , 1/eps= %f \n",R_dyn[e[0].T],R_dyn[e[0].T - 1],(R_dyn[i]-R_dyn[i-1]),(FisicalTime[i]-FisicalTime[i-1]),(R_dyn[i]-R_dyn[i-1])/(FisicalTime[i]-FisicalTime[i-1]),(1.0/param.FemaleDeadRate));	
+							R_Delta[i]=((R_dyn[i]-R_dyn[i - 52])/(FisicalTime[i]-FisicalTime[i - 52]))/param.FemaleDeadRate;
+						}else{ R_Delta[i]=0.0;}
+						#pragma omp flush
+						if(i>(52 + 100)) // 52 + 254
+						{
+							R_Delta_2[i]=((R_Delta[i]-R_Delta[i - 100])/(FisicalTime[i]-FisicalTime[i - 100]))/param.FemaleDeadRate;
+						}else{ R_Delta_2[i]=0.0; }
 						Temp_dyn[i]=temperature;
+						//printf("i=%d, r=%f, r1=%f, r2=%f, rt=%f\n",i, R_dyn[i],R_Delta[i],R_Delta_2[i], R_dyn[i]-R_Delta[i]+R_Delta_2[i]);
 					}
 						if((i-(i/500)*500)==499)    //Inicializa cada 500 pasos
 						{
@@ -195,7 +204,7 @@ float Temp_dyn[T_max+1];
 int i;
 		for(i=1;i<T_max;i++)
 		{
-			R_dyn[i]=R_dyn[i]-R_Delta[i];
+			R_dyn[i]=R_dyn[i] - R_Delta[i] + R_Delta_2[i];
 		}
 
 	//// Guarda parametros en MySql	y crea CONTENEDOR
