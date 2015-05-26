@@ -259,9 +259,12 @@ return Temperature;
 
 float calendar_humidity(float FisicalTime)
 {
+float H;
 float MonthlyHumidity[12];
+int nextMonth;
 float UnitsPerMonth = 30.0;
 int month = (int)(FisicalTime/UnitsPerMonth);
+float day = FisicalTime - month*30.0;
 
 month=(month-(month/12)*12);
 
@@ -278,7 +281,11 @@ MonthlyHumidity[9]=0.0;
 MonthlyHumidity[10]=0.0;
 MonthlyHumidity[11]=0.0;
 
-return MonthlyHumidity[month];
+nextMonth= (month + 1) - ((month + 1)/12)*12;
+
+H = MonthlyHumidity[month] + day*(MonthlyHumidity[nextMonth] - MonthlyHumidity[month])/30.0;
+
+return H;
 }
 
 void set_param_temperature_dependent(mozquito_parameters *param,float temperature)

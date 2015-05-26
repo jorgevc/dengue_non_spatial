@@ -35,7 +35,7 @@ Copyright 2015 Jorge Velazquez
 main(){	
 	
 ///////////////////////////Inicializa parametros de la simulacion
-int NDX=100;
+int NDX=50;
 int NDY=NDX;
 int T_max = 3250; //1400; 
 int NoEnsambles=8;
@@ -119,16 +119,16 @@ float Temp_dyn[T_max+1];
 		float Area;
 		float temperature, humidity;
 		float R;
-		//temperature = calendar_temperature(50.0);
+		temperature = calendar_temperature(50.0);
 			
 			////////////////////////////////Barrido Monte CARLO:
 				int i;
 				for(i=0;i<T_max;i++)
 				{
-					temperature = calendar_temperature(FisicalTime[e[0].T]);
-					//humidity = calendar_humidity(FisicalTime[e[0].T]);
+					//temperature = calendar_temperature(FisicalTime[e[0].T]);
+					humidity = calendar_humidity(FisicalTime[e[0].T]);
 					set_param_temperature_dependent(&param,temperature);
-					//set_diapause_humidity_dependent(&param,humidity);
+					set_diapause_humidity_dependent(&param,humidity);
 					for(Par=0;Par<MaxPar;Par++)
 					{
 						Area=(float)(e[Par].NDX*e[Par].NDY);
@@ -142,8 +142,11 @@ float Temp_dyn[T_max+1];
 					#pragma omp single
 					{
 						FisicalTime[e[0].T]=FisicalTime[e[0].T-1] + 1.0/param.Metabolic_Time;
-						R=param.FemaleOffspringFraction*param.PupaOffspringRate*param.FemaleOffspringRate;
+						if(i>2)
+						{
+						R=param.FemaleOffspringFraction*param.PupaOffspringRate*(param.FemaleOffspringRate + (calendar_humidity(FisicalTime[i]) - calendar_humidity(FisicalTime[i-2]))/(FisicalTime[i] - FisicalTime[i-2]));
 						R=R/(param.FemaleDeadRate*(param.PupaDeadRate + param.PupaOffspringRate));			
+						}else{R=0.0;}
 						if(R>1.0)
 						{
 							R_dyn[i]=param.FemaleOffspringFraction*param.PupaOffspringRate*(R-1.0)/(R*param.FemaleDeadRate);
